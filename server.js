@@ -56,15 +56,14 @@ app.post('/generate-qr', async (req, res) => {
     // 1. 일회용 고유 토큰 생성
     const token = uuidv4()
     const expiresAt = Date.now() + parseInt(validTime) * 60 * 1000 // 유효시간(분)을 밀리초로 변환하여 만료 시간 설정
-    const purpose = "방문"
-    const device_id = "폰"
-    const status = "대기 중"
+    const purpose = "Visitor"; 
+    const device_id = "device";
+    const status = "wait"
     // 2. (DB 대체) 생성된 토큰과 만료 시간, 전화번호를 임시 저장소에 저장
     qrTokenStore[token] = { phoneNumber, expiresAt, isValid: true, purpose, device_id, status }
-    console.log('생성된 QR 토큰:', qrTokenStore)
+    console.log('생성된 QR 토큰:', qrTokenStore[token])
 
     // 3. QR 코드로 만들 인증 URL (서버의 인증 엔드포인트)
-    // 실제 운영 시에는 'http://localhost:3000' 부분을 실제 서버 도메인으로 변경해야 합니다.
     const authUrl = `${PUBLIC_HOST}/verify-qr?token=${token}`
     console.log(`생성된 인증 URL: ${authUrl}`);
 
@@ -99,6 +98,7 @@ app.post('/generate-qr', async (req, res) => {
  */
 app.get('/verify-qr', async (req, res) => {
   const { token } = req.query
+  
 
   if (!token) {
     return res.status(400).send('인증 토큰이 없습니다.')
@@ -112,10 +112,15 @@ app.get('/verify-qr', async (req, res) => {
     return res.status(404).send('유효하지 않은 QR 코드입니다.')
   }
   if (Date.now() > tokenData.expiresAt) {
+    tokenData.isValid = false;
+    tokenData.status = "만료됨";
     return res.status(410).send('만료된 QR 코드입니다.')
   }
   if (!tokenData.isValid) {
     return res.status(409).send('이미 사용된 QR 코드입니다.')
+  }
+  if (tokenData.status !== "대기 중") {
+    return res.status(409).send(`이미 사용된 QR 코드입니다 (상태: ${tokenData.status}).`);
   }
   
 
@@ -136,9 +141,6 @@ app.get('/verify-qr', async (req, res) => {
             throw new Error(`외부 DB 목록을 가져오지 못해 새 ID를 결정할 수 없습니다: ${getError.message}`);
         }
       
-  // 인증 성공: 토큰을 비활성화 (일회용으로 만들기 위함)
-  tokenData.isValid = false
-  tokenData.status = "인증 성공";
 
   // 인증 성공 응답 (실제 시스템에서는 출입문 개방 신호 등을 보냄)
   const postApiUrl = `${API_BASE_URL}/qr-events`;
@@ -155,6 +157,9 @@ app.get('/verify-qr', async (req, res) => {
   await axios.post(postApiUrl, externalEventPayload);
   console.log(`✅ 외부 API에 인증 성공 로그 POST 완료. Payload:`, externalEventPayload);
 
+  tokenData.isValid = false
+  tokenData.status = "인증 성공"
+  
   res.send(
     `<h1>✅ 인증 성공</h1><p>환영합니다, ${tokenData.phoneNumber}님!</p><p>출입문이 열립니다.</p>`
   )

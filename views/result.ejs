@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QR 코드 생성 완료</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        background-color: #f4f4f9;
+        padding-top: 50px;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        display: inline-block;
+      }
+      h1 {
+        color: #28a745;
+      }
+      p {
+        font-size: 18px;
+      }
+      img {
+        margin-top: 20px;
+        border: 5px solid #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>전송 완료!</h1>
+      <p><b><%= phone %></b> 번호로 QR 인증 링크를 성공적으로 전송했습니다.</p>
+      <p>테스트용으로 생성된 QR 코드를 아래에 표시합니다.</p>
+      <img src="<%= qrImage %>" alt="Generated QR Code" />
+    </div>
+  </body>
+</html>

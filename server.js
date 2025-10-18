@@ -65,7 +65,7 @@ app.post('/generate-qr', async (req, res) => {
 
     // 3. QR 코드로 만들 인증 URL (서버의 인증 엔드포인트)
     // 실제 운영 시에는 'http://localhost:3000' 부분을 실제 서버 도메인으로 변경해야 합니다.
-    const authUrl = `http://${PUBLIC_HOST}/verify-qr?token=${token}`
+    const authUrl = `${PUBLIC_HOST}/verify-qr?token=${token}`
     console.log(`생성된 인증 URL: ${authUrl}`);
 
 

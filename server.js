@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
  * - 입력된 전화번호로 인증 URL을 SMS로 전송
  */
 app.post('/generate-qr', async (req, res) => {
-  const { phoneNumber, validTime } = req.body // 테스트 페이지에서 전화번호와 유효시간 받기
+  let { phoneNumber, validTime } = req.body // 테스트 페이지에서 전화번호와 유효시간 받기
 
   if (!phoneNumber || !validTime) {
     return res.status(400).send('전화번호와 유효시간을 모두 입력해주세요.')
@@ -133,7 +133,7 @@ app.get('/verify-qr', async (req, res) => {
         try {
             const response = await axios.get(getApiUrl);
             const events = response.data.qr_events || response.data;
-            const currentDbLength = Array.isArray(response.data) ? response.data.length : 0;
+            const currentDbLength = Array.isArray(events) ? events.length : 0;
             newId = currentDbLength + 1;
             console.log(`✅ 외부 DB 목록 길이 확인: ${currentDbLength}. 새로운 ID는 ${newId}로 설정.`);
         } catch (getError) {

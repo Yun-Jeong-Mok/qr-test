@@ -58,7 +58,7 @@ app.post('/generate-qr', async (req, res) => {
     const expiresAt = Date.now() + parseInt(validTime) * 60 * 1000 // 유효시간(분)을 밀리초로 변환하여 만료 시간 설정
     const purpose = "Visitor"; 
     const device_id = "device";
-    const status = "wait"
+    const status = "대기 중";
     // 2. (DB 대체) 생성된 토큰과 만료 시간, 전화번호를 임시 저장소에 저장
     qrTokenStore[token] = { phoneNumber, expiresAt, isValid: true, purpose, device_id, status }
     console.log('생성된 QR 토큰:', qrTokenStore[token])

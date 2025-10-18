@@ -52,6 +52,8 @@ app.post('/generate-qr', async (req, res) => {
     return res.status(400).send('전화번호와 유효시간을 모두 입력해주세요.')
   }
 
+  phoneNumber = phoneNumber.replace(/-/g, '');
+
   try {
     // 1. 일회용 고유 토큰 생성
     const token = uuidv4()
@@ -130,8 +132,7 @@ app.get('/verify-qr', async (req, res) => {
 
         try {
             const response = await axios.get(getApiUrl);
-            // 외부 API가 이벤트 목록을 배열로 반환한다고 가정합니다.
-            // 데이터가 배열이 아닌 경우를 대비하여 방어 코드 추가
+            const events = response.data.qr_events || response.data;
             const currentDbLength = Array.isArray(response.data) ? response.data.length : 0;
             newId = currentDbLength + 1;
             console.log(`✅ 외부 DB 목록 길이 확인: ${currentDbLength}. 새로운 ID는 ${newId}로 설정.`);

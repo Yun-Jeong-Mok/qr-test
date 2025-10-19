@@ -136,8 +136,6 @@ app.get('/verify-qr', async (req, res) => {
             console.log(`✅ 외부 DB 목록 길이 확인: ${currentDbLength}.`);
         } catch (getError) {
             console.error('⚠️ 외부 DB 목록 GET 실패 (ID 계산 불가):', getError.message);
-            // GET 요청 실패 시, ID를 결정할 수 없으므로 에러를 던져 POST를 막습니다.
-            throw new Error(`외부 DB 목록을 가져오지 못해 새 ID를 결정할 수 없습니다: ${getError.message}`);
         }
       
 
@@ -152,12 +150,26 @@ app.get('/verify-qr', async (req, res) => {
         "phone": tokenData.phoneNumber,
         "purpose": tokenData.purpose,
         "requested_at": currentTimestamp,
-        "status": tokenData.status
+        "status": "인증됨"
     }
   }
 
-  await axios.post(postApiUrl, externalEventPayload);
-  console.log(`✅ 외부 API에 인증 성공 로그 POST 완료. Payload:`, externalEventPayload);
+  try {
+		// POST 요청 전송
+		await axios.post(postApiUrl, externalEventPayload, {
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+		console.log(`✅ 외부 API에 인증 성공 로그 POST 완료. Payload:`, externalEventPayload);
+
+	} catch (error) {
+		// POST 실패 시 400 (구조 오류) 또는 500 (서버 오류)가 발생하지만,
+		// QR 인증 자체는 성공했으므로 로그만 기록하고 진행
+		const status = error.response ? error.response.status : 'N/A';
+		const data = error.response ? error.response.data : 'N/A';
+		console.error(`❌ 외부 API POST 실패 (Status ${status}). 로그만 기록하고 통과합니다.`, data);
+	}
 
   tokenData.isValid = false
   tokenData.status = "인증 성공"

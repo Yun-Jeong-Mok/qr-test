@@ -128,14 +128,12 @@ app.get('/verify-qr', async (req, res) => {
 
   const currentTimestamp = new Date().toISOString();
   const getApiUrl = `${API_BASE_URL}/qr-events`;
-  let newId = 0;
 
         try {
             const response = await axios.get(getApiUrl);
             const events = response.data.qr_events || response.data;
             const currentDbLength = Array.isArray(events) ? events.length : 0;
-            newId = currentDbLength + 1;
-            console.log(`✅ 외부 DB 목록 길이 확인: ${currentDbLength}. 새로운 ID는 ${newId}로 설정.`);
+            console.log(`✅ 외부 DB 목록 길이 확인: ${currentDbLength}.`);
         } catch (getError) {
             console.error('⚠️ 외부 DB 목록 GET 실패 (ID 계산 불가):', getError.message);
             // GET 요청 실패 시, ID를 결정할 수 없으므로 에러를 던져 POST를 막습니다.
@@ -147,12 +145,15 @@ app.get('/verify-qr', async (req, res) => {
   const postApiUrl = `${API_BASE_URL}/qr-events`;
 
   const externalEventPayload = {
-          "id": newId, // DB 목록 순서대로 ID 부여
-          "phone": tokenData.phoneNumber,
-          "purpose": tokenData.purpose,
-          "requested_at": currentTimestamp, 
-          "device_id": tokenData.device_id,
-          "status": tokenData.status
+    "client": {
+        "device_id": tokenData.device_id,
+    },
+    "data": {
+        "phone": tokenData.phoneNumber,
+        "purpose": tokenData.purpose,
+        "requested_at": currentTimestamp,
+        "status": tokenData.status
+    }
   }
 
   await axios.post(postApiUrl, externalEventPayload);

@@ -162,7 +162,12 @@ app.get('/verify-qr', async (req, res) => {
 			}
 		});
 		console.log(`✅ 외부 API에 인증 성공 로그 POST 완료. Payload:`, externalEventPayload);
+    tokenData.isValid = false
+    tokenData.status = "인증 성공"
 
+    res.send(
+    `<h1>✅ 인증 성공</h1><p>환영합니다, ${tokenData.phoneNumber}님!</p><p>출입문이 열립니다.</p>`
+  )
 	} catch (error) {
 		// POST 실패 시 400 (구조 오류) 또는 500 (서버 오류)가 발생하지만,
 		// QR 인증 자체는 성공했으므로 로그만 기록하고 진행
@@ -170,13 +175,7 @@ app.get('/verify-qr', async (req, res) => {
 		const data = error.response ? error.response.data : 'N/A';
 		console.error(`❌ 외부 API POST 실패 (Status ${status}). 로그만 기록하고 통과합니다.`, data);
 	}
-
-  tokenData.isValid = false
-  tokenData.status = "인증 성공"
   
-  res.send(
-    `<h1>✅ 인증 성공</h1><p>환영합니다, ${tokenData.phoneNumber}님!</p><p>출입문이 열립니다.</p>`
-  )
 })
 
 // 3. 서버 실행

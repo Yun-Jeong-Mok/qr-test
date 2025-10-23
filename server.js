@@ -11,7 +11,7 @@ require('dotenv').config() // .env 파일 사용 설정
 const app = express()
 const port = 3000
 
-const API_BASE_URL = "http://127.0.0.1:8000" // "https://accesscontrolserver.onrender.com"
+const API_BASE_URL = "https://accesscontrolserver.onrender.com"
 const PUBLIC_HOST = process.env.PUBLIC_HOST || `http://localhost:${port}`;
 
 // coolsms API 설정

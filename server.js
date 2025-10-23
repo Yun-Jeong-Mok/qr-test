@@ -11,7 +11,7 @@ require('dotenv').config() // .env 파일 사용 설정
 const app = express()
 const port = 3000
 
-const API_BASE_URL = "https://accesscontrolserver.onrender.com"
+const API_BASE_URL = "http://accesscontrolserver.onrender.com"
 const PUBLIC_HOST = process.env.PUBLIC_HOST || `http://localhost:${port}`;
 
 // coolsms API 설정
@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
  * - 입력된 전화번호로 인증 URL을 SMS로 전송
  */
 app.post('/generate-qr', async (req, res) => {
-  let { phoneNumber, validTime } = req.body // 테스트 페이지에서 전화번호와 유효시간 받기
+  let { phoneNumber, validTime, purpose, device_id } = req.body // 테스트 페이지에서 전화번호와 유효시간 받기
 
   if (!phoneNumber || !validTime) {
     return res.status(400).send('전화번호와 유효시간을 모두 입력해주세요.')
@@ -58,8 +58,6 @@ app.post('/generate-qr', async (req, res) => {
     // 1. 일회용 고유 토큰 생성
     const token = uuidv4()
     const expiresAt = Date.now() + parseInt(validTime) * 60 * 1000 // 유효시간(분)을 밀리초로 변환하여 만료 시간 설정
-    const purpose = "Visitor"; 
-    const device_id = "device";
     const status = "대기 중";
     // 2. (DB 대체) 생성된 토큰과 만료 시간, 전화번호를 임시 저장소에 저장
     qrTokenStore[token] = { phoneNumber, expiresAt, isValid: true, purpose, device_id, status }
@@ -73,7 +71,29 @@ app.post('/generate-qr', async (req, res) => {
     // 4. QR 코드 이미지 생성 (PNG 데이터 URL 형식)
     const qrImageDataUrl = await qrcode.toDataURL(authUrl)
 
-    // 5. SMS 전송 API 호출
+
+    // 5. FastAPI로 자동 등록 (DB에 추가)
+    const apiPayload = {
+      client: { device_id },
+      data: {
+        phone: phoneNumber,
+        purpose,
+        requested_at: new Date().toISOString(),
+        status
+      }
+    };
+
+    try {
+      const postRes = await axios.post("http://localhost:8000/qr-events", apiPayload, {
+        headers: { "Content-Type": "application/json" }
+      });
+      console.log(`✅ FastAPI에 QR 이벤트 등록 완료: ${postRes.status}`);
+    } catch (postErr) {
+      console.error("⚠️ FastAPI QR 이벤트 등록 실패:", postErr.message);
+    }
+
+
+    // 6. SMS 전송 API 호출
     const message = `[출입 인증] 아래 링크를 통해 QR 코드를 인증해주세요.\n\n${authUrl}`
     await messageService.sendOne({
       to: phoneNumber,
@@ -155,12 +175,7 @@ app.get('/verify-qr', async (req, res) => {
   }
 
   try {
-		// POST 요청 전송
-		await axios.post(postApiUrl, externalEventPayload, {
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		});
+
 		console.log(`✅ 외부 API에 인증 성공 로그 POST 완료. Payload:`, externalEventPayload);
     tokenData.isValid = false
     tokenData.status = "인증 성공"

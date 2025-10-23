@@ -167,7 +167,14 @@ app.get('/verify-qr', async (req, res) => {
 
     res.send(
     `<h1>✅ 인증 성공</h1><p>환영합니다, ${tokenData.phoneNumber}님!</p><p>출입문이 열립니다.</p>`
-  )
+    )
+
+    const patchApiUrl = `${API_BASE_URL}/qr-events/status`;
+    await axios.patch(patchApiUrl, {
+      phone: tokenData.phoneNumber,
+      status: "인증됨",
+    });
+
 	} catch (error) {
 		// POST 실패 시 400 (구조 오류) 또는 500 (서버 오류)가 발생하지만,
 		// QR 인증 자체는 성공했으므로 로그만 기록하고 진행

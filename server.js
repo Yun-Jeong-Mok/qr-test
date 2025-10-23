@@ -84,7 +84,7 @@ app.post('/generate-qr', async (req, res) => {
     };
 
     try {
-      const postRes = await axios.post("http://localhost:8000/qr-events", apiPayload, {
+      const postRes = await axios.post(`${API_BASE_URL}/qr-events`, apiPayload, {
         headers: { "Content-Type": "application/json" }
       });
       console.log(`✅ FastAPI에 QR 이벤트 등록 완료: ${postRes.status}`);
